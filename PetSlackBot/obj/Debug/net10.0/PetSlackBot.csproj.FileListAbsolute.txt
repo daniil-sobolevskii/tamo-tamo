@@ -31,3 +31,4 @@ C:\Users\Admin\Documents\Brokeree\tamo-tamo\PetSlackBot\obj\Debug\net10.0\refint
 C:\Users\Admin\Documents\Brokeree\tamo-tamo\PetSlackBot\obj\Debug\net10.0\PetSlackBot.pdb
 C:\Users\Admin\Documents\Brokeree\tamo-tamo\PetSlackBot\obj\Debug\net10.0\PetSlackBot.genruntimeconfig.cache
 C:\Users\Admin\Documents\Brokeree\tamo-tamo\PetSlackBot\obj\Debug\net10.0\ref\PetSlackBot.dll
+C:\Users\Admin\Documents\Brokeree\tamo-tamo\PetSlackBot\obj\Debug\net10.0\PetSlackBot.sourcelink.json

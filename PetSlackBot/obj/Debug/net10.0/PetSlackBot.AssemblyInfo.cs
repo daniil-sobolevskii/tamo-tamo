@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("PetSlackBot")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+7eb8b08b34670fb9e7886f14dd84df6ac66e1043")]
 [assembly: System.Reflection.AssemblyProductAttribute("PetSlackBot")]
 [assembly: System.Reflection.AssemblyTitleAttribute("PetSlackBot")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
