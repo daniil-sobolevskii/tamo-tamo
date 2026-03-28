@@ -1,3 +1,5 @@
+using System.Collections.Concurrent;
+
 namespace PetSlackBot;
 
 
@@ -19,34 +21,46 @@ public class WorkTask
         };
     }
 
-    public static WorkTask Stop(WorkTask task)
+    public static bool Stop(WorkTask task)
     {
         var time = DateTime.Now - task.TimeFromLastStart;
 
-        return new WorkTask
-        {
-            Status = WorkTaskType.Stopped,
-            CurrentExecutionTime = task.CurrentExecutionTime + time
-        };
+        task.Status = WorkTaskType.Stopped;
+        task.CurrentExecutionTime += time;
+
+        return true;
+    }
+    public static bool Finish(WorkTask task)
+    {
+        var time = DateTime.Now - task.TimeFromLastStart;
+
+        task.Status = WorkTaskType.Completed;
+        task.CurrentExecutionTime += time;
+
+        return true;
     }
 
-    public static WorkTask Continue(WorkTask task)
+
+    public static bool Continue(WorkTask task)
     {
-        return new WorkTask
-        {
-            Status = WorkTaskType.InProgress,
-            TimeFromLastStart = DateTime.Now
-        };
+        
+        var time = DateTime.Now - task.TimeFromLastStart;
+
+        task.Status = WorkTaskType.InProgress;
+        task.TimeFromLastStart = DateTime.Now;
+
+        return true;
+   
     }
 }
 public static class UsersStorage
 {
-    public static Dictionary<string, UserSession> UserSessions { get; set; } = new();
+    public static ConcurrentDictionary<string, UserSession> UserSessions { get; set; } = new();
 }
 
 public class UserSession
 {
-    public string UserId { get; set; }
+    public string SessionId { get; set; }
     public ICollection<WorkTask> Tasks { get; set; } = new List<WorkTask>();
     public DateTime EndTime { get; set; }
 

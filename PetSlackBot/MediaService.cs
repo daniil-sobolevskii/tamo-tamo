@@ -2,7 +2,7 @@
 
 public class MediaService
 {
-    private static string GetPath(string fileName) => $"/static/gifs/{fileName}.gif";
+    private static string GetPath(string fileName) => $"/static/gifts/{fileName}.gif";
 
     private static readonly Dictionary<PetState, string> _petGifs = new()
     {
@@ -18,9 +18,9 @@ public class MediaService
 
     private readonly string _baseUrl;
 
-    public MediaService(IConfiguration config)
+    public MediaService()
     {
-        _baseUrl = config["BaseUrl"] ?? "http://localhost:8080/";
+        _baseUrl = "https://unfluctuant-tabitha-nonfrigidly.ngrok-free.dev";
     }
 
     public string GetGifPathByPetState(PetState state)

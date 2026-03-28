@@ -9,17 +9,15 @@ namespace PetSlackBot;
 public class SlackController : ControllerBase
 {
     private readonly HttpClient _http = new();
-
+    private readonly MediaService mediaService;
     private readonly SlackActionHandler _handler;
-
-    // 🔥 простое хранилище (в памяти)
-    private static Dictionary<string, UserSession> _sessions = new();
 
     public SlackController()
     {
         _http.DefaultRequestHeaders.Authorization =
             new AuthenticationHeaderValue("Bearer", "");
         _handler = new SlackActionHandler(_http);
+        mediaService = new MediaService();
     }
 
 
@@ -47,7 +45,7 @@ public class SlackController : ControllerBase
                     new
                     {
                         type = "image",
-                        image_url = "https://media.giphy.com/media/JIX9t2j0ZTN9S/giphy.gif",
+                        image_url = mediaService.GetGifPathByPetState(PetState.Greetings),
                         alt_text = "pet"
                     },
                     new
@@ -74,10 +72,9 @@ public class SlackController : ControllerBase
         var msgJson = await msgResponse.Content.ReadFromJsonAsync<JsonElement>();
         var ts = msgJson.GetProperty("ts").GetString();
 
-        // 3. Сохраняем сессию
-        _sessions[userId] = new UserSession
+        UsersStorage.UserSessions[userId] = new UserSession
         {
-            UserId = channelId,
+            SessionId = channelId,
             MessageTs = ts
         };
 
@@ -88,10 +85,14 @@ public class SlackController : ControllerBase
     [HttpPost("actions")]
     public async Task<IActionResult> HandleActions()
     {
+        
         var form = await Request.ReadFormAsync();
         var payload = form["payload"].ToString();
 
         var json = JsonDocument.Parse(payload).RootElement;
+        var userId = json.GetProperty("user").GetProperty("id").GetString();
+        UsersStorage.UserSessions.TryGetValue(userId, out var session);
+        
         var type = json.GetProperty("type").GetString();
 
         if (type == "block_actions")
@@ -99,12 +100,11 @@ public class SlackController : ControllerBase
             var action = json.GetProperty("actions")[0]
                 .GetProperty("action_id").GetString();
 
-            await _handler.Handle(json, action);
+            await _handler.Handle(json, action, session);
         }
 
         else if (type == "view_submission")
         {
-            var userId = json.GetProperty("user").GetProperty("id").GetString();
 
             var state = json.GetProperty("view")
                 .GetProperty("state")
@@ -115,9 +115,7 @@ public class SlackController : ControllerBase
                 .GetProperty("task_value")
                 .GetProperty("value")
                 .GetString();
-
-            var session = _sessions[userId];
-
+            
             var newTask = WorkTask.Create(task);
             session.Tasks.Add(newTask);
 
@@ -125,11 +123,18 @@ public class SlackController : ControllerBase
                 "https://slack.com/api/chat.update",
                 new
                 {
-                    channel = session.UserId,
+                    channel = session.SessionId,
                     ts = session.MessageTs,
                     text = "Working...",
                     blocks = new object[]
                     {
+                        new
+                        {
+                            type = "image",
+                            image_url = mediaService.GetGifPathByPetState(PetState.Satiety),
+                            alt_text = "pet",
+                            
+                        },
                         new
                         {
                             type = "section",
