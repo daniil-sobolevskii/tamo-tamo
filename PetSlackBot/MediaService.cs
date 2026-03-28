@@ -6,13 +6,14 @@ public class MediaService
 
     private static readonly Dictionary<PetState, string> _petGifs = new()
     {
-        [PetState.Dead] = GetPath(""),
-        [PetState.Greetings] = GetPath(""),
-        [PetState.Neutral] = GetPath(""),
-        [PetState.Happiness] = GetPath(""),
-        [PetState.Tired] = GetPath(""),
-        [PetState.Hungry] = GetPath(""),
-        [PetState.Satiety] = GetPath(""),
+        [PetState.Dead] = GetPath("dead"),
+        [PetState.Working] = GetPath("working"),
+        [PetState.Greetings] = GetPath("dance"),
+        [PetState.Neutral] = GetPath("neutral"),
+        [PetState.Happiness] = GetPath("happiness"),
+        [PetState.Tired] = GetPath("tired"),
+        [PetState.Hungry] = GetPath("cry"),
+        [PetState.Satiety] = GetPath("satiety"),   
     };
 
     private readonly string _baseUrl;
@@ -26,13 +27,14 @@ public class MediaService
     {
         return _petGifs.TryGetValue(state, out var path)
             ? $"{_baseUrl}{path}"
-            : $"{_baseUrl}/{GetPath("default")}";
+            : $"{_baseUrl}/{GetPath("neutral")}";
     }
 }
 
 public enum PetState
 {
     Dead,
+    Working,
     Greetings,
     Neutral,
     Happiness,
