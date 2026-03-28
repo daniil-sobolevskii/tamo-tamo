@@ -5,5 +5,6 @@ builder.Services.AddControllers();
 var app = builder.Build();
 
 app.MapControllers();
+app.UseStaticFiles();
 
 app.Run();
