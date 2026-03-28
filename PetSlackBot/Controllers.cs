@@ -61,7 +61,7 @@ public class SlackController : ControllerBase
                                     text = "Let's start!?"
                                 },
                                 style = "primary",
-                                action_id = "add_task"
+                                action_id = Action.AddTask
                             }
                         }
                     }
@@ -93,47 +93,12 @@ public class SlackController : ControllerBase
 
         if (type == "block_actions")
         {
-            var action = json.GetProperty("actions")[0]
-                .GetProperty("action_id").GetString();
+            var action = Enum.Parse<Action>(json.GetProperty("actions")[0]
+                .GetProperty("action_id").GetString(), true);
 
-            if (action == "add_task")
-            {
-                var triggerId = json.GetProperty("trigger_id").GetString();
-
-                await _http.PostAsJsonAsync(
-                    "https://slack.com/api/views.open",
-                    new
-                    {
-                        trigger_id = triggerId,
-                        view = new
-                        {
-                            type = "modal",
-                            title = new { type = "plain_text", text = "New task" },
-                            submit = new { type = "plain_text", text = "Start!" },
-                            close = new { type = "plain_text", text = "Not now" },
-                            blocks = new object[]
-                            {
-                                new
-                                {
-                                    type = "input",
-                                    block_id = "task_input",
-                                    label = new
-                                    {
-                                        type = "plain_text",
-                                        text = "Add task name"
-                                    },
-                                    element = new
-                                    {
-                                        type = "plain_text_input",
-                                        action_id = "task_value"
-                                    }
-                                }
-                            }
-                        }
-                    });
-            }
+            await HandleBlockActions(json, action);
         }
-
+        
         else if (type == "view_submission")
         {
             var userId = json.GetProperty("user").GetProperty("id").GetString();
@@ -167,7 +132,7 @@ public class SlackController : ControllerBase
                             text = new
                             {
                                 type = "mrkdwn",
-                                text = $"*💻 Работаю*\nЗадача: *{task}*\n⏳ 1:00"
+                                text = $"*💻 Работаю*\nЗадача: *{task}*"
                             }
                         },
                         new
@@ -183,7 +148,7 @@ public class SlackController : ControllerBase
                                         type = "plain_text",
                                         text = "☕ Coffee break"
                                     },
-                                    action_id = "break"
+                                    action_id = Action.Break
                                 },
                                 new
                                 {
@@ -193,7 +158,7 @@ public class SlackController : ControllerBase
                                         type = "plain_text",
                                         text = "Cancel"
                                     },
-                                    action_id = "done",
+                                    action_id = Action.Cancel,
                                     style = "danger"
                                 },
                                 new
@@ -205,7 +170,7 @@ public class SlackController : ControllerBase
                                         text = "✅ Finish"
                                     },
                                     style = "primary",
-                                    action_id = "done"
+                                    action_id = Action.Finish
                                 }
                             }
                         }
@@ -249,6 +214,123 @@ public class SlackController : ControllerBase
         return Ok();
     }
 
+    
+      private async Task HandleBlockActions(JsonElement json, Action action)
+    {
+        if (action == Action.AddTask)
+        {
+            var triggerId = json.GetProperty("trigger_id").GetString();
+
+            await _http.PostAsJsonAsync(
+                "https://slack.com/api/views.open",
+                new
+                {
+                    trigger_id = triggerId,
+                    view = new
+                    {
+                        type = "modal",
+                        title = new { type = "plain_text", text = "New task" },
+                        submit = new { type = "plain_text", text = "Start!" },
+                        close = new { type = "plain_text", text = "Not now" },
+                        blocks = new object[]
+                        {
+                            new {
+                                type = "input",
+                                block_id = "task_input",
+                                label = new {
+                                    type = "plain_text",
+                                    text = "Add task name"
+                                },
+                                element = new {
+                                    type = "plain_text_input",
+                                    action_id = "task_value"
+                                }
+                            }
+                        }
+                    }
+                });
+        }
+
+        if (action == Action.Break)
+        {
+            await _http.PostAsJsonAsync(
+                "https://slack.com/api/chat.update",
+                new
+                {
+                    channel = json.GetProperty("channel").GetProperty("id").GetString(),
+                    ts = json.GetProperty("message").GetProperty("ts").GetString(),
+                    text = "Break",
+                    blocks = new object[]
+                    {
+                        new {
+                            type = "section",
+                            text = new {
+                                type = "mrkdwn",
+                                text = "☕ *Перерыв*\nОтдохни немного"
+                            }
+                        },
+                        new {
+                            type = "image",
+                            image_url = "https://media.giphy.com/media/l0HlBO7eyXzSZkJri/giphy.gif",
+                            alt_text = "break"
+                        }
+                    }
+                });
+        }
+        if (action == Action.Cancel)
+        {
+            await _http.PostAsJsonAsync(
+                "https://slack.com/api/chat.update",
+                new
+                {
+                    channel = json.GetProperty("channel").GetProperty("id").GetString(),
+                    ts = json.GetProperty("message").GetProperty("ts").GetString(),
+                    text = "Break",
+                    blocks = new object[]
+                    {
+                        new {
+                            type = "section",
+                            text = new {
+                                type = "mrkdwn",
+                                text = "☕ *Перерыв*\nОтдохни немного"
+                            }
+                        },
+                        new {
+                            type = "image",
+                            image_url = "https://media.giphy.com/media/l0HlBO7eyXzSZkJri/giphy.gif",
+                            alt_text = "break"
+                        }
+                    }
+                });
+        }
+        if (action == Action.Finish)
+        {
+            await _http.PostAsJsonAsync(
+                "https://slack.com/api/chat.update",
+                new
+                {
+                    channel = json.GetProperty("channel").GetProperty("id").GetString(),
+                    ts = json.GetProperty("message").GetProperty("ts").GetString(),
+                    text = "Done",
+                    blocks = new object[]
+                    {
+                        new {
+                            type = "section",
+                            text = new {
+                                type = "mrkdwn",
+                                text = "✅ *Задача завершена!*"
+                            }
+                        },
+                        new {
+                            type = "image",
+                            image_url = "https://media.giphy.com/media/111ebonMs90YLu/giphy.gif",
+                            alt_text = "done"
+                        }
+                    }
+                });
+        }
+    }
+
     class UserSession
     {
         public string Task { get; set; }
@@ -256,4 +338,5 @@ public class SlackController : ControllerBase
         public string ChannelId { get; set; }
         public string MessageTs { get; set; }
     }
+
 }
