@@ -1,6 +1,6 @@
 namespace PetSlackBot;
 
-public static class Action
+public static class Actions
 {
     public const string Start = "start";
     public const string AddTask = "add_task";
