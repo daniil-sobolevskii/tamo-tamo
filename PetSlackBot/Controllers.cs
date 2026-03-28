@@ -74,7 +74,7 @@ public class SlackController : ControllerBase
         // 3. Сохраняем сессию
         _sessions[userId] = new UserSession
         {
-            ChannelId = channelId,
+            UserId = channelId,
             MessageTs = ts
         };
 
@@ -115,13 +115,14 @@ public class SlackController : ControllerBase
 
             var session = _sessions[userId];
 
-            session.Task = task;
+            var newTask = WorkTask.Create(task);
+            session.Tasks.Add(newTask);
 
             await _http.PostAsJsonAsync(
                 "https://slack.com/api/chat.update",
                 new
                 {
-                    channel = session.ChannelId,
+                    channel = session.UserId,
                     ts = session.MessageTs,
                     text = "Working...",
                     blocks = new object[]
@@ -186,7 +187,7 @@ public class SlackController : ControllerBase
                     "https://slack.com/api/chat.update",
                     new
                     {
-                        channel = session.ChannelId,
+                        channel = session.UserId,
                         ts = session.MessageTs,
                         text = "Время",
                         blocks = new object[]
@@ -329,14 +330,65 @@ public class SlackController : ControllerBase
                     }
                 });
         }
-    }
+      }
+}
 
-    class UserSession
+public static class UsersStorage
+{
+    public static Dictionary<string, UserSession> UserSessions { get; set; } = new();
+}
+public class UserSession
+{
+    public string UserId { get; set; }
+    public ICollection<WorkTask> Tasks { get; set; }
+    public DateTime EndTime { get; set; }
+
+    // Why?
+    public string MessageTs { get; set; }
+}
+
+public class WorkTask
+{
+    public string Title { get; set; }
+    public WorkTaskType Status { get; set; }
+    public TimeSpan CurrentExecutionTime { get; set; }
+    public DateTime TimeFromLastStart { get; set; }
+
+    public static WorkTask Create(string title)
     {
-        public string Task { get; set; }
-        public DateTime EndTime { get; set; }
-        public string ChannelId { get; set; }
-        public string MessageTs { get; set; }
+        return new WorkTask
+        {
+            Title = title,
+            Status = WorkTaskType.InProgress,
+            CurrentExecutionTime = TimeSpan.Zero,
+            TimeFromLastStart = DateTime.Now
+        };
     }
 
+    public static WorkTask Stop(WorkTask task)
+    {
+        var time = DateTime.Now - task.TimeFromLastStart;
+
+        return new WorkTask
+        {
+            Status = WorkTaskType.Stopped,
+            CurrentExecutionTime = task.CurrentExecutionTime + time
+        };
+    }
+
+    public static WorkTask Continue(WorkTask task)
+    {
+        return new WorkTask
+        {
+            Status = WorkTaskType.InProgress,
+            TimeFromLastStart = DateTime.Now
+        };
+    }
+}
+
+public enum WorkTaskType
+{
+    Stopped,
+    InProgress,
+    Completed
 }
