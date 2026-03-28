@@ -1,11 +1,10 @@
 namespace PetSlackBot;
 
-public enum Action
+public static class Action
 {
-    AddTask,
-    Start,
-    Break ,
-    Cancel ,
-    Finish,
-    
+    public const string Start = "start";
+    public const string AddTask = "add_task";
+    public const string Break = "break";
+    public const string Cancel = "cancel";
+    public const string Finish = "finish";
 }

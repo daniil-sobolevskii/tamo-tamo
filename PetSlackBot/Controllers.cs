@@ -93,8 +93,8 @@ public class SlackController : ControllerBase
 
         if (type == "block_actions")
         {
-            var action = Enum.Parse<Action>(json.GetProperty("actions")[0]
-                .GetProperty("action_id").GetString(), true);
+            var action = json.GetProperty("actions")[0]
+                .GetProperty("action_id").GetString();
 
             await HandleBlockActions(json, action);
         }
@@ -215,7 +215,7 @@ public class SlackController : ControllerBase
     }
 
     
-      private async Task HandleBlockActions(JsonElement json, Action action)
+      private async Task HandleBlockActions(JsonElement json, string action)
     {
         if (action == Action.AddTask)
         {
