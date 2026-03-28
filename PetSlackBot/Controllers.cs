@@ -59,7 +59,11 @@ public class SlackController : ControllerBase
                                 text = new
                                 {
                                     type = "plain_text",
-                                    text = "Let's start!?"
+                                    text = @"
+                                        I'm awake! What'll we do?
+                                        Check Kiri tutorial here - https://docs.google.com/presentation/d/1Zlbq5dU6u8l9zGMuZN7qiHBQpH4S0bF64Q0ECrSX4SM/edit?slide=id.p1#slide=id.p1.
+                                        Let's start!?"
+
                                 },
                                 style = "primary",
                                 action_id = Actions.AddTask
