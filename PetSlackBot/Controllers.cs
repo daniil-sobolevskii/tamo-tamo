@@ -1,4 +1,3 @@
-
 using Microsoft.AspNetCore.Mvc;
 using System.Net.Http.Headers;
 using System.Text.Json;
@@ -20,16 +19,13 @@ public class SlackController : ControllerBase
             new AuthenticationHeaderValue("Bearer", "");
     }
 
-    // =========================
-    // /pet
-    // =========================
+
     [HttpPost("commands")]
     public async Task<IActionResult> HandleCommand()
     {
         var form = await Request.ReadFormAsync();
         var userId = form["user_id"].ToString();
 
-        // открыть DM
         var openResponse = await _http.PostAsJsonAsync(
             "https://slack.com/api/conversations.open",
             new { users = userId });
@@ -37,36 +33,32 @@ public class SlackController : ControllerBase
         var openJson = await openResponse.Content.ReadFromJsonAsync<JsonElement>();
         var channelId = openJson.GetProperty("channel").GetProperty("id").GetString();
 
-        // отправить сообщение с кнопкой
         var msgResponse = await _http.PostAsJsonAsync(
             "https://slack.com/api/chat.postMessage",
             new
             {
                 channel = channelId,
-                text = "🐾 Тамагочи",
+                text = "🐾",
                 blocks = new object[]
                 {
-                    new {
-                        type = "section",
-                        text = new {
-                            type = "mrkdwn",
-                            text = "*🐾 Тамагочи*\nГотов работать?"
-                        }
-                    },
-                    new {
+                    new
+                    {
                         type = "image",
                         image_url = "https://media.giphy.com/media/JIX9t2j0ZTN9S/giphy.gif",
                         alt_text = "pet"
                     },
-                    new {
+                    new
+                    {
                         type = "actions",
                         elements = new object[]
                         {
-                            new {
+                            new
+                            {
                                 type = "button",
-                                text = new {
+                                text = new
+                                {
                                     type = "plain_text",
-                                    text = "➕ Добавить задачу"
+                                    text = "Let's start!?"
                                 },
                                 style = "primary",
                                 action_id = "add_task"
@@ -79,7 +71,7 @@ public class SlackController : ControllerBase
         var msgJson = await msgResponse.Content.ReadFromJsonAsync<JsonElement>();
         var ts = msgJson.GetProperty("ts").GetString();
 
-        // сохраняем (пока без задачи)
+        // 3. Сохраняем сессию
         _sessions[userId] = new UserSession
         {
             ChannelId = channelId,
@@ -89,9 +81,7 @@ public class SlackController : ControllerBase
         return Ok();
     }
 
-    // =========================
-    // КНОПКИ + MODAL
-    // =========================
+
     [HttpPost("actions")]
     public async Task<IActionResult> HandleActions()
     {
@@ -101,15 +91,12 @@ public class SlackController : ControllerBase
         var json = JsonDocument.Parse(payload).RootElement;
         var type = json.GetProperty("type").GetString();
 
-        // =========================
-        // НАЖАЛИ КНОПКУ
-        // =========================
         if (type == "block_actions")
         {
-            var actionId = json.GetProperty("actions")[0]
+            var action = json.GetProperty("actions")[0]
                 .GetProperty("action_id").GetString();
 
-            if (actionId == "add_task")
+            if (action == "add_task")
             {
                 var triggerId = json.GetProperty("trigger_id").GetString();
 
@@ -121,19 +108,22 @@ public class SlackController : ControllerBase
                         view = new
                         {
                             type = "modal",
-                            title = new { type = "plain_text", text = "Новая задача" },
-                            submit = new { type = "plain_text", text = "Старт" },
-                            close = new { type = "plain_text", text = "Отмена" },
+                            title = new { type = "plain_text", text = "New task" },
+                            submit = new { type = "plain_text", text = "Start!" },
+                            close = new { type = "plain_text", text = "Not now" },
                             blocks = new object[]
                             {
-                                new {
+                                new
+                                {
                                     type = "input",
                                     block_id = "task_input",
-                                    label = new {
+                                    label = new
+                                    {
                                         type = "plain_text",
-                                        text = "Введите задачу"
+                                        text = "Add task name"
                                     },
-                                    element = new {
+                                    element = new
+                                    {
                                         type = "plain_text_input",
                                         action_id = "task_value"
                                     }
@@ -144,9 +134,6 @@ public class SlackController : ControllerBase
             }
         }
 
-        // =========================
-        // SUBMIT MODAL
-        // =========================
         else if (type == "view_submission")
         {
             var userId = json.GetProperty("user").GetProperty("id").GetString();
@@ -165,45 +152,57 @@ public class SlackController : ControllerBase
 
             session.Task = task;
 
-            // 🔥 обновляем сообщение
             await _http.PostAsJsonAsync(
                 "https://slack.com/api/chat.update",
                 new
                 {
                     channel = session.ChannelId,
                     ts = session.MessageTs,
-                    text = "Работа",
+                    text = "Working...",
                     blocks = new object[]
                     {
-                        new {
+                        new
+                        {
                             type = "section",
-                            text = new {
+                            text = new
+                            {
                                 type = "mrkdwn",
                                 text = $"*💻 Работаю*\nЗадача: *{task}*\n⏳ 1:00"
                             }
                         },
-                        new {
-                            type = "image",
-                            image_url = "https://media.giphy.com/media/l0MYt5jPR6QX5pnqM/giphy.gif",
-                            alt_text = "work"
-                        },
-                        new {
+                        new
+                        {
                             type = "actions",
                             elements = new object[]
                             {
-                                new {
+                                new
+                                {
                                     type = "button",
-                                    text = new {
+                                    text = new
+                                    {
                                         type = "plain_text",
-                                        text = "☕ Перерыв"
+                                        text = "☕ Coffee break"
                                     },
                                     action_id = "break"
                                 },
-                                new {
+                                new
+                                {
                                     type = "button",
-                                    text = new {
+                                    text = new
+                                    {
                                         type = "plain_text",
-                                        text = "✅ Завершить"
+                                        text = "Cancel"
+                                    },
+                                    action_id = "done",
+                                    style = "danger"
+                                },
+                                new
+                                {
+                                    type = "button",
+                                    text = new
+                                    {
+                                        type = "plain_text",
+                                        text = "✅ Finish"
                                     },
                                     style = "primary",
                                     action_id = "done"
@@ -227,14 +226,17 @@ public class SlackController : ControllerBase
                         text = "Время",
                         blocks = new object[]
                         {
-                            new {
+                            new
+                            {
                                 type = "section",
-                                text = new {
+                                text = new
+                                {
                                     type = "mrkdwn",
                                     text = "⏰ *Время вышло!*\nПора отдохнуть ☕"
                                 }
                             },
-                            new {
+                            new
+                            {
                                 type = "image",
                                 image_url = "https://media.giphy.com/media/3o7btPCcdNniyf0ArS/giphy.gif",
                                 alt_text = "break"
@@ -246,7 +248,7 @@ public class SlackController : ControllerBase
 
         return Ok();
     }
-    
+
     class UserSession
     {
         public string Task { get; set; }
